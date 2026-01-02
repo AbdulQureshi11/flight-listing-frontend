@@ -71,7 +71,11 @@ const FlightSearch = () => {
       const payload = {
         from: values.from,
         to: values.to,
-        date: values.date.format("YYYY-MM-DD"),
+        date: values.date.format("YYYY-MM-DD"), // Departure date
+        returnDate:
+          tripType === "round" && values.returnDate
+            ? values.returnDate.format("YYYY-MM-DD")
+            : null, // Add return date for round trips
         adults: values.adults,
       };
 

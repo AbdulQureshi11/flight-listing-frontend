@@ -1,60 +1,45 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import FlightScheduleComp from "./FlightScheduleComp";
 
 const FlightSchedule = () => {
-    const navigate = useNavigate();
+  const [flights, setFlights] = useState([]);
+  const [tripType, setTripType] = useState("oneway");
+  const [loading, setLoading] = useState(true);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchParams, setSearchParams] = useState(null);
 
-    const [flights, setFlights] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [hasSearched, setHasSearched] = useState(false); // 🔥 NEW
+  useEffect(() => {
+    const resultsStr = sessionStorage.getItem("flightSearchResults");
+    const searchParamsStr = sessionStorage.getItem("searchParams");
 
-    useEffect(() => {
-        const payloadStr = sessionStorage.getItem("flightSearchPayload");
+    if (resultsStr) {
+      try {
+        const searchResults = JSON.parse(resultsStr);
+        setFlights(searchResults.flights || []);
+        setTripType(searchResults.tripType || "oneway");
+        setHasSearched(true);
 
-        // 🚫 Block direct URL access
-        if (!payloadStr) {
-            setFlights([]);
-            setLoading(false);
-            setHasSearched(false);
-            return;
+        if (searchParamsStr) {
+          setSearchParams(JSON.parse(searchParamsStr));
         }
+      } catch (error) {
+        console.error("Error parsing flight results:", error);
+      }
+    }
+    setLoading(false);
+  }, []);
 
-        const payload = JSON.parse(payloadStr);
-
-        setLoading(true);
-
-        axios
-            .post("http://localhost:9000/api/search", payload)
-            .then((res) => {
-                setFlights(res.data?.flights || []);
-            })
-            .catch((err) => {
-                console.error("SEARCH ERROR:", err);
-                setFlights([]);
-            })
-            .finally(() => {
-                setHasSearched(true);   // ✅ API finished
-                setLoading(false);
-            });
-
-        // 🔥 CLEAR DATA when leaving page
-        return () => {
-            sessionStorage.removeItem("flightResults");
-            sessionStorage.removeItem("flightSearchPayload");
-        };
-    }, []);
-
-    return (
-        <div className="min-h-screen bg-gray-100 py-6">
-            <FlightScheduleComp
-                flights={flights}
-                loading={loading}
-                hasSearched={hasSearched}
-            />
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-gray-100 py-6">
+      <FlightScheduleComp
+        flights={flights} // Simplified: Single array of flight objects
+        tripType={tripType}
+        loading={loading}
+        hasSearched={hasSearched}
+        searchParams={searchParams}
+      />
+    </div>
+  );
 };
 
 export default FlightSchedule;

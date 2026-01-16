@@ -5,7 +5,16 @@ const BookingSubmitted = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { bookingId, message } = location.state || {};
+  // Extract all booking data from navigation state
+  const {
+    bookingId,
+    pnr,
+    airlineConfirmation,
+    message,
+    status,
+    ticketingDeadline,
+    details,
+  } = location.state || {};
 
   // If no booking data, redirect to home
   if (!bookingId) {
@@ -17,13 +26,35 @@ const BookingSubmitted = () => {
           <p style={styles.message}>
             We couldn't find your booking information.
           </p>
-          <button onClick={() => navigate("/")} style={styles.button}>
+          <button
+            onClick={() => navigate("/flight-demo")}
+            style={styles.button}
+          >
             Go to Home
           </button>
         </div>
       </div>
     );
   }
+
+  // Copy to clipboard function
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert("Copied to clipboard!");
+  };
+
+  // Format ticketing deadline
+  const formatDeadline = (deadline) => {
+    if (!deadline) return null;
+    try {
+      return new Date(deadline).toLocaleString("en-GB", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } catch {
+      return deadline;
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -32,49 +63,212 @@ const BookingSubmitted = () => {
 
         <h1 style={styles.title}>Booking Submitted Successfully!</h1>
 
+        {/* Main Booking Info */}
         <div style={styles.infoBox}>
-          <p style={styles.bookingId}>
-            <strong>Booking ID:</strong> {bookingId}
-          </p>
-          <p style={styles.message}>{message}</p>
+          <div style={styles.bookingIdRow}>
+            <div>
+              <p style={styles.label}>Universal Record (UR)</p>
+              <p style={styles.bookingId}>{bookingId}</p>
+            </div>
+            <button
+              onClick={() => copyToClipboard(bookingId)}
+              style={styles.copyButton}
+              title="Copy Booking ID"
+            >
+              📋 Copy
+            </button>
+          </div>
+
+          {pnr && pnr !== bookingId && (
+            <div style={styles.bookingIdRow}>
+              <div>
+                <p style={styles.label}>Provider PNR</p>
+                <p style={styles.pnr}>{pnr}</p>
+              </div>
+              <button
+                onClick={() => copyToClipboard(pnr)}
+                style={styles.copyButton}
+                title="Copy PNR"
+              >
+                📋 Copy
+              </button>
+            </div>
+          )}
+
+          {airlineConfirmation && (
+            <div style={styles.bookingIdRow}>
+              <div>
+                <p style={styles.label}>Airline Confirmation</p>
+                <p style={styles.confirmation}>{airlineConfirmation}</p>
+              </div>
+              <button
+                onClick={() => copyToClipboard(airlineConfirmation)}
+                style={styles.copyButton}
+                title="Copy Confirmation"
+              >
+                📋 Copy
+              </button>
+            </div>
+          )}
+
+          {message && <p style={styles.message}>{message}</p>}
         </div>
 
+        {/* Status Badge */}
         <div style={styles.statusBox}>
           <div style={styles.statusBadge}>
             <span style={styles.statusDot}>⏳</span>
-            <span>Status: Pending Approval</span>
+            <span>Status: {status || "Pending Approval"}</span>
           </div>
         </div>
 
+        {/* Booking Details Summary */}
+        {details && (
+          <div style={styles.detailsBox}>
+            <div style={styles.detailsGrid}>
+              {details.passengers && (
+                <div style={styles.detailItem}>
+                  <span style={styles.detailIcon}>👥</span>
+                  <div>
+                    <p style={styles.detailLabel}>Passengers</p>
+                    <p style={styles.detailValue}>{details.passengers}</p>
+                  </div>
+                </div>
+              )}
+              {details.segments && (
+                <div style={styles.detailItem}>
+                  <span style={styles.detailIcon}>✈️</span>
+                  <div>
+                    <p style={styles.detailLabel}>Segments</p>
+                    <p style={styles.detailValue}>{details.segments}</p>
+                  </div>
+                </div>
+              )}
+              {details.totalPrice && (
+                <div style={styles.detailItem}>
+                  <span style={styles.detailIcon}>💰</span>
+                  <div>
+                    <p style={styles.detailLabel}>Total Price</p>
+                    <p style={styles.detailValue}>{details.totalPrice}</p>
+                  </div>
+                </div>
+              )}
+              {details.email && (
+                <div style={styles.detailItem}>
+                  <span style={styles.detailIcon}>📧</span>
+                  <div>
+                    <p style={styles.detailLabel}>Email</p>
+                    <p style={styles.detailValue}>{details.email}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Ticketing Deadline Warning */}
+        {ticketingDeadline && (
+          <div style={styles.deadlineBox}>
+            <p style={styles.deadlineTitle}>⏰ Ticketing Deadline</p>
+            <p style={styles.deadlineText}>
+              Tickets must be issued by:{" "}
+              <strong>{formatDeadline(ticketingDeadline)}</strong>
+            </p>
+          </div>
+        )}
+
+        {/* Warnings */}
+        {details?.warnings && details.warnings.length > 0 && (
+          <div style={styles.warningsBox}>
+            <p style={styles.warningsTitle}>⚠️ Important Notices</p>
+            <ul style={styles.warningsList}>
+              {details.warnings.map((warning, idx) => (
+                <li key={idx} style={styles.warningItem}>
+                  {warning.message || warning}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* What's Next Section */}
         <div style={styles.infoSection}>
           <h3 style={styles.sectionTitle}>What's Next?</h3>
           <ul style={styles.stepsList}>
-            <li>Our team will review your booking request</li>
-            <li>You'll receive an email confirmation once approved</li>
-            <li>Payment instructions will be sent via email</li>
-            <li>Keep your Booking ID for reference</li>
+            <li>✅ Your booking request has been received</li>
+            <li>🔍 Our team will review your booking within 24 hours</li>
+            <li>📧 You'll receive an email confirmation once approved</li>
+            <li>💳 Payment instructions will be sent via email</li>
+            <li>
+              📝 Keep your Booking ID (<strong>{bookingId}</strong>) for
+              reference
+            </li>
+            {ticketingDeadline && (
+              <li>
+                ⏰ Complete payment before{" "}
+                <strong>{formatDeadline(ticketingDeadline)}</strong>
+              </li>
+            )}
           </ul>
         </div>
 
+        {/* Important Information */}
+        <div style={styles.importantBox}>
+          <p style={styles.importantTitle}>⚠️ Important</p>
+          <ul style={styles.importantList}>
+            <li>
+              Please check your email (including spam folder) for booking
+              confirmation
+            </li>
+            <li>
+              Booking will be held for 24 hours pending payment confirmation
+            </li>
+            <li>Contact us immediately if you need to make changes</li>
+            {airlineConfirmation && (
+              <li>
+                Save your airline confirmation code:{" "}
+                <strong>{airlineConfirmation}</strong>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        {/* Contact Information */}
         <div style={styles.contactBox}>
           <p style={styles.contactText}>
             <strong>Need help?</strong> Contact us at{" "}
             <a href="mailto:support@yourcompany.com" style={styles.link}>
               support@yourcompany.com
-            </a>
+            </a>{" "}
+            or call <strong>+92-300-1234567</strong>
           </p>
         </div>
 
+        {/* Action Buttons */}
         <div style={styles.actions}>
-          <button onClick={() => navigate("/")} style={styles.primaryButton}>
-            Back to Home
+          <button
+            onClick={() => navigate("/flight-demo")}
+            style={styles.primaryButton}
+          >
+            🏠 Back to Home
           </button>
           <button
-            onClick={() => navigate("/my-bookings")}
+            onClick={() => navigate("/flight-demo")}
             style={styles.secondaryButton}
           >
-            View My Bookings
+            🔍 Search More Flights
           </button>
+        </div>
+
+        {/* Footer */}
+        <div style={styles.footer}>
+          <p style={styles.footerText}>
+            Booking confirmed at{" "}
+            {new Date().toLocaleString("en-GB", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </p>
         </div>
       </div>
     </div>
@@ -95,7 +289,7 @@ const styles = {
     background: "white",
     borderRadius: "16px",
     padding: "40px",
-    maxWidth: "600px",
+    maxWidth: "700px",
     width: "100%",
     boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
     textAlign: "center",
@@ -116,21 +310,62 @@ const styles = {
     fontWeight: "600",
   },
   infoBox: {
-    background: "#f8f9fa",
+    background: "#f0f7ff",
     padding: "20px",
     borderRadius: "12px",
     marginBottom: "20px",
+    border: "2px solid #667eea",
+  },
+  bookingIdRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "15px",
+  },
+  label: {
+    fontSize: "12px",
+    color: "#666",
+    marginBottom: "5px",
+    textAlign: "left",
   },
   bookingId: {
-    fontSize: "18px",
+    fontSize: "24px",
     color: "#667eea",
-    marginBottom: "10px",
+    fontWeight: "bold",
     fontFamily: "monospace",
+    margin: 0,
+  },
+  pnr: {
+    fontSize: "20px",
+    color: "#764ba2",
+    fontWeight: "bold",
+    fontFamily: "monospace",
+    margin: 0,
+  },
+  confirmation: {
+    fontSize: "18px",
+    color: "#28a745",
+    fontWeight: "bold",
+    fontFamily: "monospace",
+    margin: 0,
+  },
+  copyButton: {
+    padding: "8px 16px",
+    background: "#667eea",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "all 0.2s",
+    whiteSpace: "nowrap",
   },
   message: {
     fontSize: "16px",
     color: "#555",
     lineHeight: "1.6",
+    marginTop: "10px",
   },
   statusBox: {
     marginBottom: "30px",
@@ -149,6 +384,80 @@ const styles = {
   statusDot: {
     fontSize: "16px",
   },
+  detailsBox: {
+    background: "#f8f9fa",
+    padding: "20px",
+    borderRadius: "12px",
+    marginBottom: "20px",
+  },
+  detailsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: "15px",
+  },
+  detailItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  detailIcon: {
+    fontSize: "24px",
+  },
+  detailLabel: {
+    fontSize: "12px",
+    color: "#666",
+    margin: 0,
+    textAlign: "left",
+  },
+  detailValue: {
+    fontSize: "16px",
+    fontWeight: "600",
+    color: "#333",
+    margin: 0,
+    textAlign: "left",
+  },
+  deadlineBox: {
+    background: "#fff3e0",
+    padding: "15px",
+    borderRadius: "8px",
+    marginBottom: "20px",
+    border: "2px solid #ff9800",
+  },
+  deadlineTitle: {
+    fontSize: "16px",
+    fontWeight: "600",
+    color: "#f57c00",
+    marginBottom: "5px",
+  },
+  deadlineText: {
+    fontSize: "14px",
+    color: "#666",
+    margin: 0,
+  },
+  warningsBox: {
+    background: "#fff3e0",
+    padding: "15px",
+    borderRadius: "8px",
+    marginBottom: "20px",
+    textAlign: "left",
+    border: "1px solid #ff9800",
+  },
+  warningsTitle: {
+    fontSize: "16px",
+    fontWeight: "600",
+    color: "#f57c00",
+    marginBottom: "10px",
+  },
+  warningsList: {
+    fontSize: "13px",
+    color: "#666",
+    lineHeight: "1.8",
+    paddingLeft: "20px",
+    margin: 0,
+  },
+  warningItem: {
+    marginBottom: "5px",
+  },
   infoSection: {
     textAlign: "left",
     marginBottom: "30px",
@@ -166,16 +475,38 @@ const styles = {
     listStyle: "none",
     padding: 0,
     margin: 0,
+    lineHeight: "2",
+    color: "#555",
+  },
+  importantBox: {
+    background: "#e3f2fd",
+    padding: "15px",
+    borderRadius: "8px",
+    marginBottom: "20px",
+    textAlign: "left",
+    border: "1px solid #2196f3",
+  },
+  importantTitle: {
+    fontSize: "16px",
+    fontWeight: "600",
+    color: "#1976d2",
+    marginBottom: "10px",
+  },
+  importantList: {
+    fontSize: "14px",
+    color: "#666",
+    lineHeight: "1.8",
+    paddingLeft: "20px",
   },
   contactBox: {
-    background: "#e3f2fd",
+    background: "#e8f5e9",
     padding: "15px",
     borderRadius: "8px",
     marginBottom: "30px",
   },
   contactText: {
     fontSize: "14px",
-    color: "#1565c0",
+    color: "#2e7d32",
     margin: 0,
   },
   link: {
@@ -215,9 +546,29 @@ const styles = {
     cursor: "pointer",
     transition: "all 0.3s ease",
   },
+  footer: {
+    marginTop: "30px",
+    paddingTop: "20px",
+    borderTop: "1px solid #e0e0e0",
+  },
+  footerText: {
+    fontSize: "12px",
+    color: "#999",
+  },
+  button: {
+    padding: "12px 24px",
+    background: "#667eea",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    marginTop: "20px",
+  },
 };
 
-// Add hover effects with inline style (or use CSS)
+// Add hover effects
 if (typeof document !== "undefined") {
   const style = document.createElement("style");
   style.innerHTML = `

@@ -13,25 +13,47 @@ import BookingPage from "./Components/Booking/BookingPage";
 import BookingSubmitted from "./Components/Booking/BookingSubmitted";
 import AdminDashboard from "./Pages/AdminDash";
 
+// const App = () => {
+//   const router = createBrowserRouter(
+//     createRoutesFromElements(
+//       <Route path="/" element={<Navigation />}>
+//         <Route path="/" element={<Home />} />
+//         <Route path="/explore" element={<Explore />} />
+//         <Route path="/customer-support" element={<CustomerSupport />} />
+//         <Route path="/flight-schedule" element={<FlightSchedule />} />
+//         <Route path="/booking" element={<BookingPage />} />
+//         <Route path="/booking-submitted" element={<BookingSubmitted />} />
+//         <Route path="/admin" element={<AdminDashboard />} />
+//       </Route>
+//     )
+//   );
+//   return (
+//     <div>
+//       <RouterProvider router={router} />
+//     </div>
+//   );
+// };
 const App = () => {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Navigation />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/customer-support" element={<CustomerSupport />} />
-        <Route path="/flight-schedule" element={<FlightSchedule />} />
-        <Route path="/booking" element={<BookingPage />} />
-        <Route path="/booking-submitted" element={<BookingSubmitted />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route index element={<Home />} />{" "}
+        {/* Use 'index' for the root child */}
+        <Route path="explore" element={<Explore />} />
+        <Route path="customer-support" element={<CustomerSupport />} />
+        <Route path="flight-schedule" element={<FlightSchedule />} />
+        <Route path="booking" element={<BookingPage />} />
+        <Route path="booking-submitted" element={<BookingSubmitted />} />
+        <Route path="admin" element={<AdminDashboard />} />
       </Route>
-    )
+    ),
+    { basename: "/flight-demo" }
   );
+
   return (
     <div>
       <RouterProvider router={router} />
     </div>
   );
 };
-
 export default App;

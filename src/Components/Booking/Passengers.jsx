@@ -103,8 +103,8 @@ export default function Passengers({ onNext }) {
               {p.type === "ADT"
                 ? "Adult"
                 : p.type === "CNN"
-                ? "Child"
-                : "Infant"}
+                  ? "Child"
+                  : "Infant"}
             </h3>
           </div>
 
@@ -155,6 +155,7 @@ export default function Passengers({ onNext }) {
             <Field label="Date of Birth">
               <input
                 type="date"
+                max="9999-12-31"
                 className="p-2 rounded border bg-white"
                 value={p.dob}
                 onChange={(e) => handleChange(idx, "dob", e.target.value)}
@@ -193,6 +194,7 @@ export default function Passengers({ onNext }) {
             <Field label="Passport Expiry">
               <input
                 type="date"
+                max="9999-12-31"
                 className="p-2 rounded border bg-white"
                 value={p.passportExpiry}
                 onChange={(e) =>

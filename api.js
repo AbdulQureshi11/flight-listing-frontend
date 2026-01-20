@@ -1,14 +1,14 @@
 import axios from "axios";
 
 // for Development
-// const API = axios.create({
-//   baseURL: "http://localhost:9000/",
-// });
+const API = axios.create({
+  baseURL: "http://localhost:9000/",
+});
 
 // for Production
-const API = axios.create({
-  baseURL: "https://travnetic.com/flightbackend",
-});
+// const API = axios.create({
+//   baseURL: "https://travnetic.com/flightbackend",
+// });
 
 export const validatePassengersAPI = (data) =>
   API.post("/api/validate-passengers", data);

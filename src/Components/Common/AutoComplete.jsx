@@ -8,9 +8,10 @@ const AirportAutocomplete = ({ value, onChange, placeholder }) => {
   const [airports, setAirports] = useState([]);
   const wrapperRef = useRef(null);
 
+  const base = import.meta.env.BASE_URL;
   // Load airports from JSON file
   useEffect(() => {
-    fetch("/airports.json")
+    fetch(`${base}/airports.json`)
       .then((res) => res.json())
       .then((data) => setAirports(data))
       .catch((err) => console.error("Failed to load airports:", err));

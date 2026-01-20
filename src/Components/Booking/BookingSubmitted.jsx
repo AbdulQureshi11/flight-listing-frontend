@@ -26,10 +26,7 @@ const BookingSubmitted = () => {
           <p style={styles.message}>
             We couldn't find your booking information.
           </p>
-          <button
-            onClick={() => navigate("/flight-demo")}
-            style={styles.button}
-          >
+          <button onClick={() => navigate("/")} style={styles.button}>
             Go to Home
           </button>
         </div>
@@ -237,7 +234,7 @@ const BookingSubmitted = () => {
         <div style={styles.contactBox}>
           <p style={styles.contactText}>
             <strong>Need help?</strong> Contact us at{" "}
-            <a href="mailto:support@yourcompany.com" style={styles.link}>
+            <a href="mailto:support@travesol.com" style={styles.link}>
               support@yourcompany.com
             </a>{" "}
             or call <strong>+92-300-1234567</strong>

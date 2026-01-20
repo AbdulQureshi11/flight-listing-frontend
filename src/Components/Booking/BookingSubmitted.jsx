@@ -246,16 +246,10 @@ const BookingSubmitted = () => {
 
         {/* Action Buttons */}
         <div style={styles.actions}>
-          <button
-            onClick={() => navigate("/flight-demo")}
-            style={styles.primaryButton}
-          >
+          <button onClick={() => navigate("/")} style={styles.primaryButton}>
             🏠 Back to Home
           </button>
-          <button
-            onClick={() => navigate("/flight-demo")}
-            style={styles.secondaryButton}
-          >
+          <button onClick={() => navigate("/")} style={styles.secondaryButton}>
             🔍 Search More Flights
           </button>
         </div>

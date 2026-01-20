@@ -1,17 +1,99 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import api from "../../../api.js";
 import { useNavigate } from "react-router-dom";
 
-const ReviewBooking = ({ passengers, contactInfo, flight }) => {
+// const ReviewBooking = ({ passengers, contactInfo, flight }) => {
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+//   const navigate = useNavigate();
+
+//   const safePassengers = Array.isArray(passengers) ? passengers : [];
+//   const safeContact = contactInfo || {};
+//   debugger;
+//   const handleSubmitBooking = async () => {
+//     // ================= VALIDATION =================
+//     if (!safePassengers.length) {
+//       setError("No passengers found. Please go back and add passengers.");
+//       return;
+//     }
+
+//     if (!safeContact.email) {
+//       setError(
+//         "Contact information missing. Please go back and add your email."
+//       );
+//       return;
+//     }
+
+//     // Get flight data from sessionStorage
+//     const selectedFlightStr = sessionStorage.getItem("selectedFlight");
+//     if (!selectedFlightStr) {
+//       setError("Flight selection expired. Please search for flights again.");
+//       return;
+//     }
+
+//     let selectedFlight;
+//     selectedFlight = JSON.parse(selectedFlightStr);
+//     try {
+//       setLoading(true);
+//       setError(null);
+
+//       const bookingResponse = await api.post("/api/bookings", {
+//         selectedFlight: selectedFlight,
+//         passengers: safePassengers,
+//         contactInfo: safeContact,
+//         formOfPayment: { type: "Cash" },
+//       });
+
+//       if (bookingResponse.data.success) {
+//         // Clear sessionStorage
+//         sessionStorage.removeItem("travelportData");
+//         sessionStorage.removeItem("selectedFlight");
+
+//         // Navigate to success page
+//         navigate("/booking-submitted", {
+//           state: {
+//             bookingId: bookingResponse.data.bookingId,
+//             pnr: bookingResponse.data.pnr,
+//             message: bookingResponse.data.message,
+//           },
+//         });
+//       }
+//     } catch (err) {
+//       console.error("Booking error:", err);
+//       setError(
+//         err.response?.data?.error ||
+//           err.response?.data?.message ||
+//           err.message ||
+//           "Failed to submit booking. Please try again."
+//       );
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+const ReviewBooking = ({ passengers, contactInfo, flight: flightProp }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // 1. Unified Flight Data: Prop has priority, Session is the backup
+  const flightData = useMemo(() => {
+    if (flightProp && Object.keys(flightProp).length > 0) return flightProp;
+
+    const saved = sessionStorage.getItem("selectedFlight");
+    return saved ? JSON.parse(saved) : null;
+  }, [flightProp]);
 
   const safePassengers = Array.isArray(passengers) ? passengers : [];
   const safeContact = contactInfo || {};
 
   const handleSubmitBooking = async () => {
     // ================= VALIDATION =================
+    if (!flightData) {
+      setError("Flight selection missing or expired. Please search again.");
+      return;
+    }
+
     if (!safePassengers.length) {
       setError("No passengers found. Please go back and add passengers.");
       return;
@@ -24,32 +106,24 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
       return;
     }
 
-    // Get flight data from sessionStorage
-    const selectedFlightStr = sessionStorage.getItem("selectedFlight");
-    if (!selectedFlightStr) {
-      setError("Flight selection expired. Please search for flights again.");
-      return;
-    }
-
-    let selectedFlight;
-    selectedFlight = JSON.parse(selectedFlightStr);
     try {
       setLoading(true);
       setError(null);
 
+      // ================= API CALL =================
+      // We use flightData which is guaranteed to match the UI
       const bookingResponse = await api.post("/api/bookings", {
-        selectedFlight: selectedFlight,
+        selectedFlight: flightData,
         passengers: safePassengers,
         contactInfo: safeContact,
         formOfPayment: { type: "Cash" },
       });
 
       if (bookingResponse.data.success) {
-        // Clear sessionStorage
+        // Clear storage only after success
         sessionStorage.removeItem("travelportData");
         sessionStorage.removeItem("selectedFlight");
 
-        // Navigate to success page
         navigate("/booking-submitted", {
           state: {
             bookingId: bookingResponse.data.bookingId,
@@ -63,7 +137,6 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
       setError(
         err.response?.data?.error ||
           err.response?.data?.message ||
-          err.message ||
           "Failed to submit booking. Please try again."
       );
     } finally {
@@ -95,35 +168,36 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
           ✈️ Flight Details
         </h3>
 
-        {flight?.segments?.length ? (
+        {flightData?.segments?.length ? (
           <div className="space-y-4">
             {/* Route Summary */}
             <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-2xl font-bold text-indigo-600">
-                    {flight.segments[0].from} →{" "}
-                    {flight.segments[flight.segments.length - 1].to}
+                    {flightData.segments[0].from} →{" "}
+                    {flightData.segments[flightData.segments.length - 1].to}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">
-                    {flight.stops === 0
+                    {flightData.stops === 0
                       ? "Non-stop"
-                      : `${flight.stops} stop${
-                          flight.stops > 1 ? "s" : ""
+                      : `${flightData.stops} stop${
+                          flightData.stops > 1 ? "s" : ""
                         }`}{" "}
-                    • {formatDuration(flight.durationMinutes)}
+                    • {formatDuration(flightData.durationMinutes)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-indigo-600">
-                    {flight.currency} {flight.displayPrice.toLocaleString()}
+                    {flightData.currency}{" "}
+                    {flightData.displayPrice.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Each Segment */}
-            {flight.segments.map((seg, idx) => (
+            {flightData.segments.map((seg, idx) => (
               <div
                 key={idx}
                 className="border rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -138,7 +212,7 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
                     </p>
                   </div>
                   <span className="text-sm bg-gray-100 px-3 py-1 rounded-full">
-                    Flight {idx + 1} of {flight.segments.length}
+                    Flight {idx + 1} of {flightData.segments.length}
                   </span>
                 </div>
 
@@ -154,7 +228,7 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
                   {/* Duration */}
                   <div className="text-center">
                     <p className="text-sm text-gray-500">
-                      {formatDuration(seg.flightTime)}
+                      {formatDuration(flightData.durationMinutes)}
                     </p>
                     <div className="w-full h-0.5 bg-indigo-300 my-2"></div>
                     <p className="text-xs text-gray-400">
@@ -233,7 +307,7 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
       </div>
 
       {/* ================= PRICE SUMMARY ================= */}
-      {flight?.pricing && (
+      {flightData?.pricing && (
         <div className=" from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-5">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             💰 Price Breakdown
@@ -242,12 +316,16 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-700">Base Fare:</span>
-              <span className="font-medium">{flight.pricing.basePrice}</span>
+              <span className="font-medium">
+                {flightData.pricingDetails.totalBase}
+              </span>
             </div>
 
             <div className="flex justify-between text-sm">
               <span className="text-gray-700">Taxes & Fees:</span>
-              <span className="font-medium">{flight.pricing.taxes}</span>
+              <span className="font-medium">
+                {flightData.pricingDetails.totalTaxes}
+              </span>
             </div>
 
             <hr className="my-3 border-indigo-200" />
@@ -255,7 +333,7 @@ const ReviewBooking = ({ passengers, contactInfo, flight }) => {
             <div className="flex justify-between text-lg font-bold">
               <span>Total Amount:</span>
               <span className="text-indigo-600">
-                {flight.pricing.totalPrice}
+                {flightData.pricingDetails.grandTotal}
               </span>
             </div>
           </div>

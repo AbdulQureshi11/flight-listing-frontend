@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { validatePassengersAPI } from "../../../api";
 
-const emptyPassenger = () => ({
+// Helper to create a passenger object with a specific type
+const emptyPassenger = (type = "ADT") => ({
   title: "MR",
   firstName: "",
   lastName: "",
   gender: "M",
-  type: "ADT",
+  type: type, // Now takes type as argument
   dob: "",
   passportNumber: "",
   passportExpiry: "",
@@ -21,9 +22,37 @@ const Field = ({ label, children }) => (
 );
 
 export default function Passengers({ onNext }) {
-  const [passengers, setPassengers] = useState([emptyPassenger()]);
+  const [passengers, setPassengers] = useState([]); // Start with empty array
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // ================= NEW LOGIC: AUTO-MAP FROM SEARCH =================
+  useEffect(() => {
+    const searchParamsStr = sessionStorage.getItem("searchParams");
+    if (searchParamsStr) {
+      const { travelers } = JSON.parse(searchParamsStr);
+
+      const initialPassengers = [];
+
+      // Add Adults
+      for (let i = 0; i < (travelers.adults || 0); i++) {
+        initialPassengers.push(emptyPassenger("ADT"));
+      }
+      // Add Children
+      for (let i = 0; i < (travelers.child || 0); i++) {
+        initialPassengers.push(emptyPassenger("CNN"));
+      }
+      // Add Infants
+      for (let i = 0; i < (travelers.infant || 0); i++) {
+        initialPassengers.push(emptyPassenger("INF"));
+      }
+
+      setPassengers(initialPassengers);
+    } else {
+      // Fallback if no session data found
+      setPassengers([emptyPassenger("ADT")]);
+    }
+  }, []);
 
   const handleChange = (idx, field, value) => {
     const copy = [...passengers];
@@ -31,19 +60,9 @@ export default function Passengers({ onNext }) {
     setPassengers(copy);
   };
 
-  const addPassenger = () => {
-    setPassengers([...passengers, emptyPassenger()]);
-  };
-
-  const removePassenger = (idx) => {
-    if (passengers.length === 1) return;
-    setPassengers(passengers.filter((_, i) => i !== idx));
-  };
-
   const validateInfantRule = () => {
     const adults = passengers.filter((p) => p.type === "ADT").length;
     const infants = passengers.filter((p) => p.type === "INF").length;
-
     if (infants > adults) {
       return "Each infant must be associated with one adult (1 infant per adult allowed)";
     }
@@ -60,14 +79,17 @@ export default function Passengers({ onNext }) {
     try {
       setLoading(true);
       setError(null);
+      // Ensure data is sent to your API
       await validatePassengersAPI({ passengers });
       onNext(passengers);
     } catch (err) {
-      setError(err.response?.data?.errors?.join(", "));
+      setError(err.response?.data?.errors?.join(", ") || "Validation failed");
     } finally {
       setLoading(false);
     }
   };
+
+  if (passengers.length === 0) return <div>Loading passenger forms...</div>;
 
   return (
     <div>
@@ -76,35 +98,35 @@ export default function Passengers({ onNext }) {
       {passengers.map((p, idx) => (
         <div key={idx} className="border rounded-xl p-4 mb-4 bg-gray-50">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="font-medium">
-              Passenger {idx + 1} ({p.type})
+            <h3 className="font-bold text-indigo-700">
+              Passenger {idx + 1}:{" "}
+              {p.type === "ADT"
+                ? "Adult"
+                : p.type === "CNN"
+                ? "Child"
+                : "Infant"}
             </h3>
-            {passengers.length > 1 && (
-              <button
-                onClick={() => removePassenger(idx)}
-                className="text-red-600 text-sm"
-              >
-                Remove
-              </button>
-            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Field label="Title">
               <select
-                className="input border"
+                className="p-2 rounded border bg-white"
                 value={p.title}
                 onChange={(e) => handleChange(idx, "title", e.target.value)}
               >
                 <option value="MR">Mr</option>
                 <option value="MS">Ms</option>
+                <option value="MRS">Mrs</option>
+                <option value="MSTR">Mstr</option>
                 <option value="MISS">Miss</option>
               </select>
             </Field>
 
             <Field label="First Name">
               <input
-                className="input border"
+                className="p-2 rounded border bg-white"
+                placeholder="As per Passport"
                 value={p.firstName}
                 onChange={(e) => handleChange(idx, "firstName", e.target.value)}
               />
@@ -112,7 +134,8 @@ export default function Passengers({ onNext }) {
 
             <Field label="Last Name">
               <input
-                className="input border"
+                className="p-2 rounded border bg-white"
+                placeholder="As per Passport"
                 value={p.lastName}
                 onChange={(e) => handleChange(idx, "lastName", e.target.value)}
               />
@@ -120,7 +143,7 @@ export default function Passengers({ onNext }) {
 
             <Field label="Gender">
               <select
-                className="input border"
+                className="p-2 rounded border bg-white"
                 value={p.gender}
                 onChange={(e) => handleChange(idx, "gender", e.target.value)}
               >
@@ -129,30 +152,37 @@ export default function Passengers({ onNext }) {
               </select>
             </Field>
 
-            <Field label="Passenger Type">
-              <select
-                className="input border"
-                value={p.type}
-                onChange={(e) => handleChange(idx, "type", e.target.value)}
-              >
-                <option value="ADT">Adult</option>
-                <option value="CNN">Child</option>
-                <option value="INF">Infant</option>
-              </select>
-            </Field>
-
             <Field label="Date of Birth">
               <input
                 type="date"
-                className="input border"
+                className="p-2 rounded border bg-white"
                 value={p.dob}
                 onChange={(e) => handleChange(idx, "dob", e.target.value)}
               />
             </Field>
 
+            <Field label="Country Code">
+              <select
+                className="p-2 rounded border bg-white"
+                value={p.nationality}
+                onChange={(e) =>
+                  handleChange(idx, "nationality", e.target.value)
+                }
+              >
+                <option value="">Select Country</option>
+                <option value="PK">PK (Pakistan)</option>
+                <option value="US">US (United States)</option>
+                <option value="GB">GB (United Kingdom)</option>
+                <option value="SA">SA (Saudi Arabia)</option>
+                <option value="UAE">UAE (United Arab Emirates)</option>
+                <option value="DE">DE (Germany)</option>
+                {/* Add more countries as needed */}
+              </select>
+            </Field>
+
             <Field label="Passport Number">
               <input
-                className="input border"
+                className="p-2 rounded border bg-white"
                 value={p.passportNumber}
                 onChange={(e) =>
                   handleChange(idx, "passportNumber", e.target.value)
@@ -163,20 +193,10 @@ export default function Passengers({ onNext }) {
             <Field label="Passport Expiry">
               <input
                 type="date"
-                className="input border"
+                className="p-2 rounded border bg-white"
                 value={p.passportExpiry}
                 onChange={(e) =>
                   handleChange(idx, "passportExpiry", e.target.value)
-                }
-              />
-            </Field>
-
-            <Field label="Nationality">
-              <input
-                className="input border"
-                value={p.nationality}
-                onChange={(e) =>
-                  handleChange(idx, "nationality", e.target.value)
                 }
               />
             </Field>
@@ -184,21 +204,25 @@ export default function Passengers({ onNext }) {
         </div>
       ))}
 
-      {error && <p className="text-red-600 mb-3">{error}</p>}
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-medium">
+          {error}
+        </div>
+      )}
 
-      <div className="flex justify-between">
-        <button onClick={addPassenger} className="btn-secondary">
-          + Add Passenger
-        </button>
-
-        <button onClick={submit} disabled={loading} className="btn-primary">
-          {loading ? "Validating..." : "Continue"}
+      <div className="flex justify-end mt-6">
+        <button
+          onClick={submit}
+          disabled={loading}
+          className={`px-10 py-3 rounded-full font-bold text-white transition-all ${
+            loading
+              ? "bg-gray-400"
+              : "bg-indigo-600 hover:bg-indigo-700 shadow-lg"
+          }`}
+        >
+          {loading ? "Validating..." : "Continue to Contact Info"}
         </button>
       </div>
-
-      <p className="text-xs text-gray-500 mt-3">
-        ⚠ One adult can carry only one infant
-      </p>
     </div>
   );
 }

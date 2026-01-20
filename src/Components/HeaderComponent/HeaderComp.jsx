@@ -12,7 +12,7 @@ const HeaderComp = () => {
     <header className="w-full sticky top-0 z-50 backdrop-blur-xl bg-gradient-to-r from-[#020617]/95 via-[#020617]/90 to-[#020617]/95 border-b border-white/10">
       <div className="max-w-7xl mx-auto h-[72px] flex items-center justify-between px-4 sm:px-12">
         {/* Logo */}
-        <Link to="/flight-demo" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3">
           <img
             src={logo}
             alt="Logo"

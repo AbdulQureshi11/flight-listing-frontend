@@ -1,14 +1,8 @@
 import axios from "axios";
 
-// for Development
 const API = axios.create({
-  baseURL: "http://localhost:9000/",
+  baseURL: import.meta.env.VITE_API_URL,
 });
-
-// for Production
-// const API = axios.create({
-//   baseURL: "https://travnetic.com/flightbackend",
-// });
 
 export const validatePassengersAPI = (data) =>
   API.post("/api/validate-passengers", data);
